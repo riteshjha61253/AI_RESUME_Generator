@@ -1,0 +1,97 @@
+You are an AI resume generator.
+
+Your task is to generate a professional IT job resume in **pure JSON format** (no markdown, no commentary, no code fences).  
+Ensure the JSON is well-structured, consistent, and strictly follows the schema below.  
+If any value is missing, fill it with an empty string or null where applicable.  
+Do not include any text before or after the JSON object.
+
+---
+
+Input Description:
+"{{userDescription}}"
+
+---
+
+### OUTPUT REQUIREMENTS:
+Respond strictly with a single JSON object matching this schema:
+
+{
+  "personalInformation": {
+    "fullName": "string",
+    "email": "string",
+    "phoneNumber": "string",
+    "location": "string",
+    "linkedIn": "string or null",
+    "gitHub": "string or null",
+    "portfolio": "string or null"
+  },
+  "summary": "string",
+  "skills": [
+    {
+      "title": "string",
+      "level": "string"
+    }
+  ],
+  "experience": [
+    {
+      "jobTitle": "string",
+      "company": "string",
+      "location": "string",
+      "duration": "string (e.g., 'Jan 2020 - Present')",
+      "responsibility": "string"
+    }
+  ],
+  "education": [
+    {
+      "degree": "string",
+      "university": "string",
+      "location": "string",
+      "graduationYear": "string"
+    }
+  ],
+  "certifications": [
+    {
+      "title": "string",
+      "issuingOrganization": "string",
+      "year": "string"
+    }
+  ],
+  "projects": [
+    {
+      "title": "string",
+      "description": "string",
+      "technologiesUsed": ["string"],
+      "githubLink": "string or null"
+    }
+  ],
+  "achievements": [
+    {
+      "title": "string",
+      "year": "string",
+      "extraInformation": "string"
+    }
+  ],
+  "languages": [
+    {
+      "name": "string"
+    }
+  ],
+  "interests": [
+    {
+      "name": "string"
+    }
+  ]
+}
+
+---
+
+### RULES:
+1. Output **only valid JSON** — no markdown, no ```json fences```, no comments.
+2. Every key above must exist, even if empty.
+3. Use realistic, professional values where possible.
+4. Fill arrays with at least one element if empty (e.g., [{"title": "", "level": ""}]).
+5. Never include explanation or reasoning text.
+
+---
+
+Now generate the JSON resume based on the provided Input Description.

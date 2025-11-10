@@ -3,31 +3,134 @@ import "daisyui/dist/full.css";
 import { FaGithub, FaLinkedin, FaPhone, FaEnvelope } from "react-icons/fa";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { useRef } from "react";
+import { useRef } from "react"; // Removed unused useState
 import { useReactToPrint } from "react-to-print";
 
 const Resume = ({ data }) => {
   const resumeRef = useRef(null);
 
-  const handleDownloadPdf = () => {
-    toPng(resumeRef.current, { quality: 1.0 })
-      .then((dataUrl) => {
-        const pdf = new jsPDF("p", "mm", "a4");
-        pdf.addImage(dataUrl, "PNG", 10, 10, 190, 0);
-        pdf.save(`${data.personalInformation.fullName}.pdf`);
-      })
-      .catch((err) => {
-        console.error("Error generating PDF", err);
-      });
+  const handleDownloadPdf = async () => {
+    const element = resumeRef.current;
+
+    // ✅ Clone the element to avoid modifying the visible one
+    const clone = element.cloneNode(true);
+    const newStyle = document.createElement('style');
+    newStyle.textContent = `
+      #pdf-clone {
+        max-width: none !important;
+        width: 794px !important; /* A4 width in px */
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box;
+      }
+      #pdf-clone > * {
+        max-width: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+      #pdf-clone .mx-auto {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        width: 100% !important;
+      }
+    `;
+    clone.id = 'pdf-clone';
+    clone.appendChild(newStyle);
+    document.body.appendChild(clone); // Temporarily add to DOM for capture
+
+    const a4WidthPx = 794;
+
+    const dataUrl = await toPng(clone, {
+      quality: 1.0,
+      backgroundColor: "#ffffff",
+      pixelRatio: 2,
+      width: a4WidthPx,
+    });
+
+    // Clean up clone
+    document.body.removeChild(clone);
+
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // ✅ NEW: 10mm padding (left/right margins) in PDF
+    const margin = 5; // mm
+    const contentWidth = pdfWidth - 2 * margin;
+
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        // ✅ Calculate px height per page (adjusted for content width scaling)
+        const pxPerPage = (pdfHeight * img.width) / contentWidth;
+
+        let yPosition = 0;
+
+        // ✅ Multi-page loop: Slice image into page-sized chunks
+        while (yPosition < img.height) {
+          if (yPosition > 0) {
+            pdf.addPage();
+          }
+
+          const sliceHeightPx = Math.min(img.height - yPosition, pxPerPage);
+
+          // Create temporary canvas to slice the image
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = img.width;
+          tempCanvas.height = sliceHeightPx;
+          const ctx = tempCanvas.getContext('2d');
+          ctx.drawImage(
+            img,
+            0, yPosition,      // Source x, y
+            img.width, sliceHeightPx, // Source width, height
+            0, 0,              // Dest x, y
+            img.width, sliceHeightPx // Dest width, height
+          );
+
+          const sliceDataUrl = tempCanvas.toDataURL('image/png');
+
+          // Calculate scaled height for this slice in mm
+          const sliceScaledHeight = (sliceHeightPx / img.width) * contentWidth;
+
+          // Add slice with margins, full content width
+          pdf.addImage(
+            sliceDataUrl,
+            'PNG',
+            margin, 0,         // Position with left margin, top=0
+            contentWidth, sliceScaledHeight
+          );
+
+          yPosition += sliceHeightPx;
+        }
+
+        resolve();
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+
+    pdf.save(`${data.personalInformation.fullName}.pdf`);
   };
+
   return (
     <>
       <div
         ref={resumeRef}
-        className="max-w-4xl  mx-auto shadow-2xl rounded-lg p-8 space-y-6 bg-base-100 text-base-content border border-gray-200 dark:border-gray-700 transition-all duration-300"
+        className="max-w-2xl mx-auto shadow-2xl rounded-lg p-8 space-y-6 bg-base-100 text-base-content "
       >
         {/* Header Section */}
         <div className="text-center space-y-2">
+          {data.personalInformation.profileImage && (
+            <div className="flex justify-center mb-4">
+              <img
+                src={data.personalInformation.profileImage}
+                alt="Profile"
+                className="w-32 h-32 rounded-full object-cover border-4 border-primary shadow-md"
+              />
+            </div>
+          )}
+
           <h1 className="text-4xl font-bold text-primary">
             {data.personalInformation.fullName}
           </h1>
@@ -89,14 +192,28 @@ const Resume = ({ data }) => {
         {/* Skills Section */}
         <section>
           <h2 className="text-2xl font-semibold text-secondary">Skills</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-            {data.skills.map((skill, index) => (
+
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3"
+            style={{
+              pageBreakInside: "avoid",
+            }}
+          >
+            {data.skills?.map((skill, index) => (
               <div
                 key={index}
-                className="badge badge-outline badge-lg px-4 py-2"
+                className="p-3 rounded-md bg-base-200 border border-gray-300 dark:border-gray-700 text-sm"
+                style={{
+                  wordBreak: "break-word",
+                  pageBreakInside: "avoid",
+                }}
               >
-                {skill.title} -{" "}
-                <span className="ml-1 font-semibold">{skill.level}</span>
+                <span className="font-semibold">{skill.title}</span>
+                {skill.level && (
+                  <span className="block text-gray-500 text-xs">
+                    Level: {skill.level}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -244,7 +361,7 @@ const Resume = ({ data }) => {
 
       <section className="flex justify-center mt-4 ">
         <div onClick={handleDownloadPdf} className="btn btn-primary">
-          Print
+          Download PDF
         </div>
       </section>
     </>

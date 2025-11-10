@@ -54,7 +54,7 @@ function Navbar() {
         </ul>
       </div>
       <div className="navbar-end">
-        <a className="btn">Login</a>
+        <a href="/login" className="btn btn-sm btn-primary">Login</a>
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { FaPlusCircle } from "react-icons/fa";
 import Resume from "../components/Resume";
 
+
+
 const GenerateResume = () => {
   const [data, setData] = useState({
     personalInformation: {
@@ -29,6 +31,8 @@ const GenerateResume = () => {
   const [showFormUI, setShowFormUI] = useState(false);
   const [showResumeUI, setShowResumeUI] = useState(false);
   const [showPromptInput, setShowPromptInput] = useState(true);
+  const [profilePhoto, setProfilePhoto] = useState("");
+
 
   const experienceFields = useFieldArray({ control, name: "experience" });
   const educationFields = useFieldArray({ control, name: "education" });
@@ -40,6 +44,35 @@ const GenerateResume = () => {
   const languagesFields = useFieldArray({ control, name: "languages" });
   const interestsFields = useFieldArray({ control, name: "interests" });
   const skillsFields = useFieldArray({ control, name: "skills" });
+  const handleProfileUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("profile", file);
+
+  try {
+    const res = await fetch("http://localhost:8080/api/v1/upload/profile", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      setProfilePhoto(result.imageUrl);
+      setValue("personalInformation.profileImage", result.imageUrl);
+
+      toast.success("Profile image uploaded!");
+    } else {
+      toast.error("Upload failed");
+    }
+  } catch (error) {
+    console.log(error);
+    toast.error("Error uploading image");
+  }
+};
+
 
   //handle form submit
   const onSubmit = (data) => {
@@ -133,6 +166,67 @@ const GenerateResume = () => {
     );
   };
 
+  const renderSkills = (fields) => {
+  return (
+    <div className="form-control w-full mb-6">
+      <h3 className="text-xl font-semibold mb-2">Skills</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {fields.fields.map((field, index) => (
+          <div
+            key={field.id}
+            className="p-4 bg-base-100 rounded-lg shadow-sm border border-base-300"
+          >
+            <div className="mb-3">
+              <label className="label">
+                <span className="label-text">Skill</span>
+              </label>
+              <input
+                {...register(`skills.${index}.title`)}
+                className="input input-bordered w-full bg-base-100"
+                placeholder="React.js"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="label">
+                <span className="label-text">Level</span>
+              </label>
+              <select
+                {...register(`skills.${index}.level`)}
+                className="select select-bordered w-full bg-base-100"
+              >
+                <option value="">Select level</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Proficient">Proficient</option>
+                <option value="Expert">Expert</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => fields.remove(index)}
+              className="btn btn-error btn-sm w-full"
+            >
+              <FaTrash /> Remove
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => fields.append({ title: "", level: "" })}
+        className="btn btn-secondary btn-sm mt-4 flex items-center"
+      >
+        <FaPlusCircle className="mr-2" /> Add Skill
+      </button>
+    </div>
+  );
+};
+
+
   function showFormFunction() {
     return (
       <div className="w-full p-10">
@@ -158,6 +252,19 @@ const GenerateResume = () => {
               {renderInput("personalInformation.portfolio", "Portfolio", "url")}
             </div>
 
+            <div className="form-control w-full mb-4">
+  <label className="label">
+    <span className="label-text text-base-content">Profile Photo</span>
+  </label>
+  <input
+    type="file"
+    accept="image/*"
+    className="file-input file-input-bordered w-full"
+    onChange={handleProfileUpload}
+  />
+</div>
+
+
             <h3 className="text-xl font-semibold">Summary</h3>
             <textarea
               {...register("summary")}
@@ -165,10 +272,8 @@ const GenerateResume = () => {
               rows={4}
             ></textarea>
 
-            {renderFieldArray(skillsFields, "Skills", "skills", [
-              "title",
-              "level",
-            ])}
+            {renderSkills(skillsFields)}
+
             {renderFieldArray(experienceFields, "Experience", "experience", [
               "jobTitle",
               "company",

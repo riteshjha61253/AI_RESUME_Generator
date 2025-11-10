@@ -9,7 +9,8 @@ import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import GenerateResume from "./pages/GenerateResume";
 import { Toaster } from "react-hot-toast";
-
+import Login from "./pages/Login";
+import { isLoggedIn } from "./utils/auth";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
@@ -20,7 +21,14 @@ createRoot(document.getElementById("root")).render(
           <Route path="about" element={<About />} />
           <Route path="services" element={<Services />} />
           <Route path="contact" element={<Contact />} />
-          <Route path="generate-resume" element={<GenerateResume />} />
+          {/* <Route path="generate-resume" element={<GenerateResume />} /> */}
+          <Route
+  path="generate-resume"
+  element={isLoggedIn() ? <GenerateResume /> : <Navigate to="/login" />}
+/>
+
+          <Route path="login" element={<Login />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

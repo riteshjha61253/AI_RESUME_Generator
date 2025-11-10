@@ -1,7 +1,7 @@
 // ✅ ResumeService.js
 import axios from "axios";
 
-export const baseURLL = "http://localhost:8080";
+export const baseURLL = "https://ai-resume-generator-tcda.onrender.com";
 
 // ✅ Create instance FIRST
 export const axiosInstance = axios.create({

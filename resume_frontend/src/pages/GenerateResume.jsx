@@ -6,6 +6,7 @@ import { BiBook } from "react-icons/bi";
 import { useForm, useFieldArray } from "react-hook-form";
 import { FaPlusCircle } from "react-icons/fa";
 import Resume from "../components/Resume";
+import { useNavigate } from "react-router";
 
 
 
@@ -44,6 +45,15 @@ const GenerateResume = () => {
   const languagesFields = useFieldArray({ control, name: "languages" });
   const interestsFields = useFieldArray({ control, name: "interests" });
   const skillsFields = useFieldArray({ control, name: "skills" });
+  const navigate = useNavigate();
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    navigate("/login");
+  }
+}, []);
+
   const handleProfileUpload = async (e) => {
   const file = e.target.files[0];
   if (!file) return;

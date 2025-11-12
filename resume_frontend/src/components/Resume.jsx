@@ -1,122 +1,113 @@
 import React from "react";
 import "daisyui/dist/full.css";
 import { FaGithub, FaLinkedin, FaPhone, FaEnvelope } from "react-icons/fa";
-import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
-import { useRef } from "react"; // Removed unused useState
 import { useReactToPrint } from "react-to-print";
+import { useRef } from "react";
 
 const Resume = ({ data }) => {
   const resumeRef = useRef(null);
 
-  const handleDownloadPdf = async () => {
-    const element = resumeRef.current;
-
-    // ✅ Clone the element to avoid modifying the visible one
-    const clone = element.cloneNode(true);
-    const newStyle = document.createElement('style');
-    newStyle.textContent = `
-      #pdf-clone {
-        max-width: none !important;
-        width: 794px !important; /* A4 width in px */
-        margin: 0 !important;
-        padding: 0 !important;
-        box-sizing: border-box;
-      }
-      #pdf-clone > * {
-        max-width: none !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }
-      #pdf-clone .mx-auto {
-        margin-left: auto !important;
-        margin-right: auto !important;
-        width: 100% !important;
-      }
-    `;
-    clone.id = 'pdf-clone';
-    clone.appendChild(newStyle);
-    document.body.appendChild(clone); // Temporarily add to DOM for capture
-
-    const a4WidthPx = 794;
-
-    const dataUrl = await toPng(clone, {
-      quality: 1.0,
-      backgroundColor: "#ffffff",
-      pixelRatio: 2,
-      width: a4WidthPx,
-    });
-
-    // Clean up clone
-    document.body.removeChild(clone);
-
-    const pdf = new jsPDF("p", "mm", "a4");
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    // ✅ NEW: 10mm padding (left/right margins) in PDF
-    const margin = 5; // mm
-    const contentWidth = pdfWidth - 2 * margin;
-
-    await new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        // ✅ Calculate px height per page (adjusted for content width scaling)
-        const pxPerPage = (pdfHeight * img.width) / contentWidth;
-
-        let yPosition = 0;
-
-        // ✅ Multi-page loop: Slice image into page-sized chunks
-        while (yPosition < img.height) {
-          if (yPosition > 0) {
-            pdf.addPage();
-          }
-
-          const sliceHeightPx = Math.min(img.height - yPosition, pxPerPage);
-
-          // Create temporary canvas to slice the image
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = img.width;
-          tempCanvas.height = sliceHeightPx;
-          const ctx = tempCanvas.getContext('2d');
-          ctx.drawImage(
-            img,
-            0, yPosition,      // Source x, y
-            img.width, sliceHeightPx, // Source width, height
-            0, 0,              // Dest x, y
-            img.width, sliceHeightPx // Dest width, height
-          );
-
-          const sliceDataUrl = tempCanvas.toDataURL('image/png');
-
-          // Calculate scaled height for this slice in mm
-          const sliceScaledHeight = (sliceHeightPx / img.width) * contentWidth;
-
-          // Add slice with margins, full content width
-          pdf.addImage(
-            sliceDataUrl,
-            'PNG',
-            margin, 0,         // Position with left margin, top=0
-            contentWidth, sliceScaledHeight
-          );
-
-          yPosition += sliceHeightPx;
+  const handlePrint = useReactToPrint({
+    contentRef: resumeRef,
+    removeAfterPrint: true,
+    pageStyle: `
+      @page { margin: 2mm; size: A4; } /* Ultra-tight margins */
+      @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .no-print { display: none !important; }
+        #resume-print {
+          max-width: none !important;
+          width: 100% !important;
+          box-shadow: none !important;
+          padding: 0 !important; /* No padding */
+          font-size: 0.8em !important; /* Tiny base font */
+          line-height: 1.1 !important; /* Ultra-tight lines */
         }
-
-        resolve();
-      };
-      img.onerror = reject;
-      img.src = dataUrl;
-    });
-
-    pdf.save(`${data.personalInformation.fullName}.pdf`);
-  };
+        #resume-print .space-y-6 > * + * { margin-top: 0.125rem !important; } /* Minimal sections */
+        #resume-print .mb-4 { margin-bottom: 0.125rem !important; }
+        #resume-print .p-8 { padding: 0 !important; }
+        #resume-print .p-4 { padding: 0.125rem !important; } /* Bare minimum */
+        #resume-print .p-3 { padding: 0 !important; }
+        #resume-print .gap-3 { gap: 0 !important; }
+        #resume-print .mt-3 { margin-top: 0 !important; }
+        #resume-print .mt-2 { margin-top: 0 !important; }
+        #resume-print .divider { 
+          margin: 0.125rem 0 !important; 
+          height: 0.5px !important; 
+          background: #e5e7eb !important; /* Thin, light divider */
+        }
+        #resume-print h1 { 
+          font-size: 1.5rem !important; /* Compact name */
+          margin: 0 0 0.125rem 0 !important;
+          line-height: 1.1 !important;
+        }
+        #resume-print h2 { 
+          font-size: 0.95rem !important; /* Small headings */
+          margin: 0 0 0.125rem 0 !important;
+          line-height: 1.1 !important;
+        }
+        #resume-print h3 { 
+          font-size: 0.9rem !important; 
+          margin: 0 0 0.125rem 0 !important;
+          line-height: 1.1 !important;
+        }
+        #resume-print p { 
+          margin: 0 0 0.125rem 0 !important;
+          font-size: 0.8em !important;
+          line-height: 1.1 !important;
+        }
+        #resume-print .w-32, #resume-print .h-32 { 
+          width: 2.5rem !important; 
+          height: 2.5rem !important; /* Micro pic */
+          margin-bottom: 0.125rem !important;
+        }
+        #resume-print .text-lg { font-size: 0.8em !important; margin-bottom: 0.125rem !important; }
+        #resume-print ul { 
+          padding-left: 0.5rem !important; 
+          margin: 0 0 0.125rem 0 !important; 
+        }
+        #resume-print li { 
+          margin: 0 0 0.125rem 0 !important;
+          font-size: 0.8em !important;
+          line-height: 1.1 !important;
+        }
+        #resume-print .space-y-2 > * + * { margin-top: 0.125rem !important; }
+        #resume-print .space-x-4 { gap: 0.25rem !important; } /* Crammed contacts */
+        #resume-print .grid-cols-2 { grid-template-columns: repeat(6, 1fr) !important; } /* Max-dense skills */
+        #resume-print .shadow-md { box-shadow: none !important; }
+        #resume-print .rounded-lg, #resume-print .rounded-md { border-radius: 0 !important; } /* No curves */
+        #resume-print .border { border: 0.5px solid #e5e7eb !important; }
+        #resume-print a { 
+          color: #3b82f6 !important; 
+          text-decoration: none !important; 
+          font-size: 0.8em !important;
+          line-height: 1.1 !important;
+        }
+        #resume-print .text-primary { color: #3b82f6 !important; }
+        #resume-print .text-secondary { color: #6b7280 !important; }
+        #resume-print .bg-base-200 { background: transparent !important; } /* No bg color */
+        #resume-print .text-gray-500, #resume-print .text-gray-400, #resume-print .text-gray-700 { color: #6b7280 !important; }
+        /* Force breaks only after dividers */
+        #resume-print section { page-break-inside: avoid !important; orphans: 1; widows: 1; }
+        #resume-print .divider { page-break-after: auto !important; }
+        /* Compress experience/project descriptions if long */
+        #resume-print [class*="text-gray-600"] { font-size: 0.75em !important; line-height: 1.05 !important; }
+      }
+    `,
+  });
 
   return (
     <>
+      <style>
+        {`
+          @media print {
+            .no-print { display: none !important; }
+          }
+        `}
+      </style>
       <div
         ref={resumeRef}
+        id="resume-print"
         className="max-w-2xl mx-auto shadow-2xl rounded-lg p-8 space-y-6 bg-base-100 text-base-content "
       >
         {/* Header Section */}
@@ -138,32 +129,32 @@ const Resume = ({ data }) => {
             {data.personalInformation.location}
           </p>
 
-          <div className="flex justify-center space-x-4 mt-2">
+          <div className="flex justify-center space-x-4 mt-2 flex-wrap justify-center gap-1">
             {data.personalInformation.email && (
               <a
                 href={`mailto:${data.personalInformation.email}`}
-                className="flex items-center text-secondary hover:underline"
+                className="flex items-center text-secondary hover:underline text-xs"
               >
-                <FaEnvelope className="mr-2" /> {data.personalInformation.email}
+                <FaEnvelope className="mr-1 text-xs" /> {data.personalInformation.email}
               </a>
             )}
             {data.personalInformation.phoneNumber && (
-              <p className="flex items-center text-gray-500">
-                <FaPhone className="mr-2" />{" "}
+              <p className="flex items-center text-gray-500 text-xs">
+                <FaPhone className="mr-1 text-xs" />{" "}
                 {data.personalInformation.phoneNumber}
               </p>
             )}
           </div>
 
-          <div className="flex justify-center space-x-4 mt-2">
+          <div className="flex justify-center space-x-4 mt-2 flex-wrap justify-center gap-1">
             {data.personalInformation.gitHub && (
               <a
                 href={data.personalInformation.gitHub}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-500 hover:text-gray-700 flex items-center"
+                className="text-gray-500 hover:text-gray-700 flex items-center text-xs"
               >
-                <FaGithub className="mr-2" /> GitHub
+                <FaGithub className="mr-1 text-xs" /> GitHub
               </a>
             )}
             {data.personalInformation.linkedIn && (
@@ -171,9 +162,9 @@ const Resume = ({ data }) => {
                 href={data.personalInformation.linkedIn}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-700 flex items-center"
+                className="text-blue-500 hover:text-blue-700 flex items-center text-xs"
               >
-                <FaLinkedin className="mr-2" /> LinkedIn
+                <FaLinkedin className="mr-1 text-xs" /> LinkedIn
               </a>
             )}
           </div>
@@ -359,10 +350,10 @@ const Resume = ({ data }) => {
         </section>
       </div>
 
-      <section className="flex justify-center mt-4 ">
-        <div onClick={handleDownloadPdf} className="btn btn-primary">
-          Download PDF
-        </div>
+      <section className="flex justify-center mt-4 no-print">
+        <button onClick={handlePrint} className="btn btn-primary">
+          Download PDF (Print to PDF)
+        </button>
       </section>
     </>
   );

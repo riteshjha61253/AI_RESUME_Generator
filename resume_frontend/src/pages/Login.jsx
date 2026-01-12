@@ -28,7 +28,7 @@ function Login() {
     try {
       setLoading(true);
 
-      const res = await fetch("https://ai-resume-generator-tcda.onrender.com/api/v1/auth/login", {
+      const res = await fetch("https://ai-resume-generator-rj.onrender.com/api/v1/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

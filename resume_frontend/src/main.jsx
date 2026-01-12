@@ -26,7 +26,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="contact" element={<Contact />} />
           {/* <Route path="generate-resume" element={<GenerateResume />} /> */}
  <Route path="generate-resume" element={<GenerateResume />} />
- <Route path="/register" element={<Register />} />
+ <Route path="register" element={<Register />} />
 
 
           <Route path="login" element={<Login />} />

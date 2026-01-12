@@ -27,7 +27,7 @@ export const uploadProfileImage = [
     }
 
 const filePath = req.file.path.replace(/\\/g, "/"); // ✅ Convert \ to /
-const imageUrl = `https://ai-resume-generator-tcda.onrender.com/${filePath}`;
+const imageUrl = `http://localhost:8080/${filePath}`;
 
 
     res.json({

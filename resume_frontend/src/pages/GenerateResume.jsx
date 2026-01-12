@@ -62,7 +62,7 @@ useEffect(() => {
   formData.append("profile", file);
 
   try {
-    const res = await fetch("https://ai-resume-generator-tcda.onrender.com/api/v1/upload/profile", {
+    const res = await fetch("http://localhost:8080/api/v1/upload/profile", {
       method: "POST",
       body: formData,
     });

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 function Login() {
   const navigate = useNavigate();
@@ -107,9 +107,8 @@ function Login() {
 
         <p className="mt-4 text-center text-sm">
           Don’t have an account?{" "}
-          <a className="link link-primary" href="/register">
-            Register
-          </a>
+          <Link to="/register" className="link link-primary">Register</Link>
+          
         </p>
       </div>
     </div>

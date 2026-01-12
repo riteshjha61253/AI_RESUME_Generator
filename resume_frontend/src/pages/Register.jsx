@@ -29,7 +29,7 @@ function Register() {
     try {
       setLoading(true);
 
-      const res = await fetch("https://ai-resume-generator-tcda.onrender.com/api/v1/auth/register", {
+      const res = await fetch("https://ai-resume-generator-rj.onrender.com/api/v1/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

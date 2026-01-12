@@ -26,20 +26,17 @@ app.use(bodyParser.json());
 // DB Connect
 connectDB();
 
-// ✅ Serve uploads folder publicly
+// Serve uploads (OK on Render, but TEMPORARY storage)
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// ✅ API Routes
+// API Routes ONLY
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/resume", authMiddleware, resumeRouter);
 app.use("/api/v1/upload", uploadRoutes);
 
-// ✅ Serve FRONTEND build (Vite)
-app.use(express.static(path.join(__dirname, "../resume_frontend/dist")));
-
-// ✅ Handle ALL frontend routes
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../resume_frontend/dist/index.html"));
+// Health check (optional but smart)
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 export default app;
